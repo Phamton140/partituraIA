@@ -188,7 +188,14 @@ class TranscriptionService:
         }
 
     def _build_empty_response(self, filename, reason):
-        return {"id": "error", "title": f"Error: {reason}", "tracks": []}
+        return {
+            "id": "error", 
+            "title": f"Error: {reason}", 
+            "timeSignature": [4, 4], 
+            "tempo": 120,
+            "totalDuration": 0,
+            "tracks": []
+        }
 
     def _midi_to_name(self, midi):
         notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']

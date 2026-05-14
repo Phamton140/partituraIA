@@ -48,7 +48,7 @@ const TransportBar: React.FC<TransportBarProps> = ({
           <p className="transport-title">{song?.title ?? 'No song loaded'}</p>
           {song && (
             <p className="transport-meta">
-              {song.composer ?? ''} · {song.tempo} BPM · {song.timeSignature[0]}/{song.timeSignature[1]}
+              {song.composer ?? ''} · {song.tempo} BPM · {song?.timeSignature?.[0] ?? 4}/{song?.timeSignature?.[1] ?? 4}
             </p>
           )}
         </div>
