@@ -26,6 +26,7 @@ export const useMusicStore = create<MusicStore>((set) => ({
     speed: 1,
     isLooping: false,
     activeHands: new Set(['left', 'right'] as Hand[]),
+    userPressedKeys: new Set<number>(),
   },
   audioReady: false,
   audioLoading: false,
@@ -36,7 +37,8 @@ export const useMusicStore = create<MusicStore>((set) => ({
     currentTime: 0, 
     speed: 1, 
     isLooping: false, 
-    activeHands: new Set(['left', 'right'] as Hand[]) 
+    activeHands: new Set(['left', 'right'] as Hand[]),
+    userPressedKeys: new Set<number>(),
   } }),
   
   setPlayback: (updater) => set((state) => ({

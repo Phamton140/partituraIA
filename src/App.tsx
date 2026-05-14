@@ -6,6 +6,7 @@ import TransportBar from './components/TransportBar';
 import ImportPanel from './components/ImportPanel';
 import SongLibrary from './components/SongLibrary';
 import { initAudio, stopAll, isAudioReady, scheduleSong } from './engine/audioEngine';
+import { initMidi } from './engine/midiEngine';
 import { Piano, Sparkles, Menu, X } from 'lucide-react';
 import * as Tone from 'tone';
 
@@ -149,7 +150,10 @@ function App() {
   const handleSkipBack = useCallback(() => handleSeek(Math.max(0, playback.currentTime - 5)), [handleSeek, playback.currentTime]);
   const handleSkipForward = useCallback(() => handleSeek(Math.min(song?.totalDuration ?? 0, playback.currentTime + 5)), [handleSeek, playback.currentTime, song]);
 
-  useEffect(() => () => { stopTick(); stopAll(); }, []);
+  useEffect(() => {
+    initMidi();
+    return () => { stopTick(); stopAll(); };
+  }, []);
 
   return (
     <div className="app">

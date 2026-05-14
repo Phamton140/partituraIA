@@ -39,6 +39,7 @@ export interface PlaybackState {
   loopEnd?: number;
   isLooping: boolean;
   activeHands: Set<Hand>;
+  userPressedKeys: Set<number>;
 }
 
 export interface AnalysisResult {

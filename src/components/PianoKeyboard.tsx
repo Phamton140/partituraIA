@@ -75,9 +75,12 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({ song, playback, onKeyPres
       if (isBlackKey(midi)) continue;
       const x = wIdx * wkW;
       const isActive = activeNotes.has(midi);
+      const isUserPressed = playback.userPressedKeys.has(midi);
       const hand = activeNotes.get(midi);
 
-      if (isActive) {
+      if (isUserPressed) {
+        ctx.fillStyle = '#fbbf24'; // Gold for user
+      } else if (isActive) {
         const gradient = ctx.createLinearGradient(x, 0, x, wkH);
         if (hand === 'right') {
           gradient.addColorStop(0, '#818cf8');
@@ -95,16 +98,16 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({ song, playback, onKeyPres
       ctx.roundRect(x + 1, 0, wkW - 2, wkH - 2, [0, 0, 6, 6]);
       ctx.fill();
 
-      if (!isActive) {
+      if (!isActive && !isUserPressed) {
         ctx.strokeStyle = '#c0c0c0';
         ctx.lineWidth = 1;
         ctx.stroke();
       }
 
       // Glow on active
-      if (isActive) {
+      if (isActive || isUserPressed) {
         ctx.shadowBlur = 18;
-        ctx.shadowColor = hand === 'right' ? '#818cf8' : '#f472b6';
+        ctx.shadowColor = isUserPressed ? '#fbbf24' : (hand === 'right' ? '#818cf8' : '#f472b6');
         ctx.beginPath();
         ctx.roundRect(x + 1, 0, wkW - 2, wkH - 2, [0, 0, 6, 6]);
         ctx.fill();
@@ -120,9 +123,14 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({ song, playback, onKeyPres
       const leftWhiteIdx = getWhiteKeyIndex(midi - 1);
       const x = leftWhiteIdx * wkW + wkW - bkW / 2;
       const isActive = activeNotes.has(midi);
+      const isUserPressed = playback.userPressedKeys.has(midi);
       const hand = activeNotes.get(midi);
 
-      if (isActive) {
+      if (isUserPressed) {
+        ctx.fillStyle = '#d97706'; // Darker gold for black keys
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = '#fbbf24';
+      } else if (isActive) {
         const gradient = ctx.createLinearGradient(x, 0, x, bkH);
         if (hand === 'right') {
           gradient.addColorStop(0, '#6366f1');
