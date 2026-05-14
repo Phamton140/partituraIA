@@ -113,6 +113,7 @@ function App() {
 
   // ── Controls ──────────────────────────────────────────────────────────────
   const handlePlay = useCallback(async () => {
+    await Tone.start();
     const ok = await ensureAudio();
     if (!ok || !song) return;
 
@@ -185,7 +186,8 @@ function App() {
     return () => { stopTick(); stopAll(); };
   }, []);
 
-  const handleSongLoad = useCallback((newSong: Song) => {
+  const handleSongLoad = useCallback(async (newSong: Song) => {
+    await Tone.start();
     setSong(newSong);
     setPlayback({ currentTime: 0, isPlaying: false });
     stopTick();
