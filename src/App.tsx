@@ -185,7 +185,7 @@ function App() {
     return () => { stopTick(); stopAll(); };
   }, []);
 
-  const handleSongLoad = useCallback((newSong: any) => {
+  const handleSongLoad = useCallback((newSong: Song) => {
     setSong(newSong);
     setPlayback({ currentTime: 0, isPlaying: false });
     stopTick();
