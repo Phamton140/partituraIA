@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
+import { useSettingsStore } from '../store/useSettingsStore';
 import type { MusicNote, Song, PlaybackState } from '../types/music';
 
 interface PianoKeyboardProps {
@@ -30,6 +31,7 @@ const WHITE_KEY_COUNT = Array.from({ length: TOTAL_KEYS }, (_, i) => i + MIN_MID
 const PianoKeyboard: React.FC<PianoKeyboardProps> = ({ song, playback, onKeyPress }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const { visuals } = useSettingsStore();
 
   const getActiveNotes = useCallback((): Map<number, 'left' | 'right'> => {
     if (!song) return new Map();
@@ -83,11 +85,11 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({ song, playback, onKeyPres
       } else if (isActive) {
         const gradient = ctx.createLinearGradient(x, 0, x, wkH);
         if (hand === 'right') {
-          gradient.addColorStop(0, '#818cf8');
-          gradient.addColorStop(1, '#4f46e5');
+          gradient.addColorStop(0, visuals.noteColorRight);
+          gradient.addColorStop(1, visuals.noteColorRight); // Or dynamic shading
         } else {
-          gradient.addColorStop(0, '#f472b6');
-          gradient.addColorStop(1, '#db2777');
+          gradient.addColorStop(0, visuals.noteColorLeft);
+          gradient.addColorStop(1, visuals.noteColorLeft);
         }
         ctx.fillStyle = gradient;
       } else {
@@ -106,8 +108,8 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({ song, playback, onKeyPres
 
       // Glow on active
       if (isActive || isUserPressed) {
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = isUserPressed ? '#fbbf24' : (hand === 'right' ? '#818cf8' : '#f472b6');
+        ctx.shadowBlur = 18 * visuals.glowIntensity;
+        ctx.shadowColor = isUserPressed ? '#fbbf24' : (hand === 'right' ? visuals.noteColorRight : visuals.noteColorLeft);
         ctx.beginPath();
         ctx.roundRect(x + 1, 0, wkW - 2, wkH - 2, [0, 0, 6, 6]);
         ctx.fill();
@@ -133,16 +135,16 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({ song, playback, onKeyPres
       } else if (isActive) {
         const gradient = ctx.createLinearGradient(x, 0, x, bkH);
         if (hand === 'right') {
-          gradient.addColorStop(0, '#6366f1');
-          gradient.addColorStop(1, '#3730a3');
+          gradient.addColorStop(0, visuals.noteColorRight);
+          gradient.addColorStop(1, visuals.noteColorRight);
         } else {
-          gradient.addColorStop(0, '#ec4899');
-          gradient.addColorStop(1, '#9d174d');
+          gradient.addColorStop(0, visuals.noteColorLeft);
+          gradient.addColorStop(1, visuals.noteColorLeft);
         }
         ctx.fillStyle = gradient;
 
-        ctx.shadowBlur = 16;
-        ctx.shadowColor = hand === 'right' ? '#818cf8' : '#f472b6';
+        ctx.shadowBlur = 16 * visuals.glowIntensity;
+        ctx.shadowColor = hand === 'right' ? visuals.noteColorRight : visuals.noteColorLeft;
       } else {
         ctx.fillStyle = '#1e1b2e';
         ctx.shadowBlur = 0;

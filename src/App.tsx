@@ -7,7 +7,8 @@ import ImportPanel from './components/ImportPanel';
 import SongLibrary from './components/SongLibrary';
 import { initAudio, stopAll, isAudioReady, scheduleSong } from './engine/audioEngine';
 import { initMidi } from './engine/midiEngine';
-import { Piano, Sparkles, Menu, X } from 'lucide-react';
+import SettingsModal from './components/SettingsModal';
+import { Piano, Sparkles, Menu, X, Settings as SettingsIcon } from 'lucide-react';
 import * as Tone from 'tone';
 
 const TICK_INTERVAL = 16; // ms
@@ -27,6 +28,8 @@ function App() {
     toggleHand,
     seek
   } = useMusicStore();
+
+  const [showSettings, setShowSettings] = React.useState(false);
 
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startWallRef = useRef<number>(0);
@@ -172,8 +175,19 @@ function App() {
         </div>
         <div className="header-right">
           {audioLoading && <span className="audio-status loading">Loading samples…</span>}
-          {audioReady && <span className="audio-status ready">🎵 Audio ready</span>}
-          {!audioReady && !audioLoading && <span className="audio-status idle">Click ▶ to load audio</span>}
+          {audioReady && (
+            <span className="audio-status ready">🎵 Audio ready</span>
+          )}
+          {!audioReady && !audioLoading && (
+            <span className="audio-status idle">Click ▶ to load audio</span>
+          )}
+          <button 
+            className="menu-btn" 
+            onClick={() => setShowSettings(true)}
+            style={{ marginLeft: '12px' }}
+          >
+            <SettingsIcon size={20} />
+          </button>
         </div>
       </header>
 
@@ -218,6 +232,11 @@ function App() {
           />
         </main>
       </div>
+
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+      />
     </div>
   );
 

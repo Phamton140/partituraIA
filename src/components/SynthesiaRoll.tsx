@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
+import { useSettingsStore } from '../store/useSettingsStore';
 import type { Song, PlaybackState } from '../types/music';
 
 interface SynthesiaRollProps {
@@ -47,6 +48,7 @@ const VISIBLE_SECONDS = 4;
 const SynthesiaRoll: React.FC<SynthesiaRollProps> = ({ song, playback, onSeek }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const { visuals } = useSettingsStore();
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -128,27 +130,27 @@ const SynthesiaRoll: React.FC<SynthesiaRollProps> = ({ song, playback, onSeek })
         const grad = ctx.createLinearGradient(x, yTop, x + w, yTop);
         if (isActive) {
           if (isRight) {
-            grad.addColorStop(0, '#818cf8');
-            grad.addColorStop(1, '#4f46e5');
+            grad.addColorStop(0, visuals.noteColorRight);
+            grad.addColorStop(1, visuals.noteColorRight);
           } else {
-            grad.addColorStop(0, '#f472b6');
-            grad.addColorStop(1, '#db2777');
+            grad.addColorStop(0, visuals.noteColorLeft);
+            grad.addColorStop(1, visuals.noteColorLeft);
           }
         } else if (isPast) {
-          grad.addColorStop(0, isRight ? 'rgba(99,102,241,0.25)' : 'rgba(236,72,153,0.25)');
-          grad.addColorStop(1, isRight ? 'rgba(79,70,229,0.15)' : 'rgba(219,39,119,0.15)');
+          grad.addColorStop(0, isRight ? `${visuals.noteColorRight}40` : `${visuals.noteColorLeft}40`);
+          grad.addColorStop(1, isRight ? `${visuals.noteColorRight}25` : `${visuals.noteColorLeft}25`);
         } else {
           // Future
-          grad.addColorStop(0, isRight ? 'rgba(129,140,248,0.85)' : 'rgba(244,114,182,0.85)');
-          grad.addColorStop(1, isRight ? 'rgba(99,102,241,0.6)' : 'rgba(236,72,153,0.6)');
+          grad.addColorStop(0, isRight ? visuals.noteColorRight : visuals.noteColorLeft);
+          grad.addColorStop(1, isRight ? `${visuals.noteColorRight}cc` : `${visuals.noteColorLeft}cc`);
         }
 
         const radius = Math.min(4, noteH / 2);
 
         // Glow for active
         if (isActive) {
-          ctx.shadowBlur = 20;
-          ctx.shadowColor = isRight ? '#818cf8' : '#f472b6';
+          ctx.shadowBlur = 20 * visuals.glowIntensity;
+          ctx.shadowColor = isRight ? visuals.noteColorRight : visuals.noteColorLeft;
         } else {
           ctx.shadowBlur = 0;
         }
@@ -160,7 +162,7 @@ const SynthesiaRoll: React.FC<SynthesiaRollProps> = ({ song, playback, onSeek })
         ctx.shadowBlur = 0;
 
         // Finger number
-        if (note.finger && noteH > 16 && w > 10) {
+        if (visuals.showFingerHints && note.finger && noteH > 16 && w > 10) {
           ctx.fillStyle = 'rgba(255,255,255,0.85)';
           ctx.font = `bold ${Math.min(12, w - 2)}px Inter, sans-serif`;
           ctx.textAlign = 'center';
