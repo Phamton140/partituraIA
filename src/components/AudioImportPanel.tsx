@@ -20,12 +20,21 @@ const AudioImportPanel: React.FC = () => {
     try {
       setResult(prev => ({ ...prev, progress: 30, stage: 'IA Transcribiendo notas (Basic Pitch)...' }));
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
       const response = await fetch('http://localhost:8000/api/audio/transcribe', {
         method: 'POST',
         body: formData,
+        signal: controller.signal
       });
 
-      if (!response.ok) throw new Error('Fallo en la transcripción de IA');
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Fallo en la transcripción de IA');
+      }
 
       const songData = await response.json();
       setResult({ status: 'success', progress: 100, stage: 'Transcripción completada' });
@@ -34,7 +43,10 @@ const AudioImportPanel: React.FC = () => {
       // Reset after success
       setTimeout(() => setResult({ status: 'idle', progress: 0, stage: '' }), 3000);
     } catch (err) {
-      setResult({ status: 'error', progress: 0, stage: '', error: (err as Error).message });
+      const message = (err as any).name === 'AbortError' 
+        ? 'La transcripción tardó demasiado (Tiempo agotado)' 
+        : (err as Error).message;
+      setResult({ status: 'error', progress: 0, stage: '', error: message });
     }
   }, [setSong]);
 
