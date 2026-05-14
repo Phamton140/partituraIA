@@ -11,7 +11,8 @@ import { initMidi } from './engine/midiEngine';
 import SettingsModal from './components/SettingsModal';
 import SheetMusicView from './components/SheetMusicView';
 import ErrorBoundary from './components/ErrorBoundary';
-import type { Song } from './types/music';
+import AudioImportPanel from './components/AudioImportPanel';
+import ImageImportPanel from './components/ImageImportPanel';
 import { Piano, Sparkles, Menu, X, Settings as SettingsIcon } from 'lucide-react';
 import * as Tone from 'tone';
 
@@ -218,9 +219,24 @@ function App() {
       </header>
 
       <div className="app-body">
-        <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-          <ImportPanel onSongLoaded={handleSongLoad} />
-          <SongLibrary currentSong={song} onSelect={handleSongLoad} />
+        <aside className={`sidebar ${sidebarOpen ? '' : 'closed'}`}>
+          <div className="sidebar-section">
+            <div className="section-title">Aprender nueva canción</div>
+            <AudioImportPanel />
+          </div>
+
+          <div className="sidebar-divider"></div>
+
+          <div className="sidebar-section beta">
+            <div className="section-title">Lector de Partituras (BETA)</div>
+            <ImageImportPanel />
+          </div>
+
+          <div className="sidebar-divider"></div>
+
+          <div className="song-library">
+            <SongLibrary currentSong={song} onSelect={handleSongLoad} />
+          </div>
         </aside>
 
         <main className="main-content">
