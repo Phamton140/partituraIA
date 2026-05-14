@@ -20,10 +20,16 @@ class OMRService:
         """
         print(f"OMR: Analyzing {file_path}")
         
-        # Load image
-        img = cv2.imread(file_path)
+        # Load image robustly (handles non-ASCII paths and more formats)
+        if not os.path.exists(file_path):
+            raise ValueError(f"File not found at: {file_path}")
+            
+        with open(file_path, "rb") as f:
+            chunk = np.frombuffer(f.read(), dtype=np.uint8)
+            img = cv2.imdecode(chunk, cv2.IMREAD_COLOR)
+            
         if img is None:
-            raise ValueError("Image loading failed")
+            raise ValueError(f"OpenCV could not decode image: {file_path}")
             
         # 1. Preprocessing
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
