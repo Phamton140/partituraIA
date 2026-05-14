@@ -122,15 +122,15 @@ const TransportBar: React.FC<TransportBarProps> = ({
         <div className="hand-controls">
           <Hand size={14} />
           <button
-            className={`hand-btn right ${playback.activeHands.has('right') ? 'active' : ''}`}
-            onClick={() => onHandToggle('right')}
-            title="Right hand"
-          >R</button>
-          <button
             className={`hand-btn left ${playback.activeHands.has('left') ? 'active' : ''}`}
             onClick={() => onHandToggle('left')}
             title="Left hand"
           >L</button>
+          <button
+            className={`hand-btn right ${playback.activeHands.has('right') ? 'active' : ''}`}
+            onClick={() => onHandToggle('right')}
+            title="Right hand"
+          >R</button>
         </div>
       </div>
     </div>

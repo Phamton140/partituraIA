@@ -235,8 +235,8 @@ function App() {
 
           <div className="keyboard-container">
             <div className="hand-legend">
-              <span className="legend-right">■ Right hand</span>
               <span className="legend-left">■ Left hand</span>
+              <span className="legend-right">■ Right hand</span>
             </div>
             <PianoKeyboard song={song} playback={playback} />
           </div>
