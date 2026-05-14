@@ -22,8 +22,6 @@ class TranscriptionService:
         print(f"AI: Transcribing {original_filename}...")
         
         if not self.engine_ready:
-            # If AI engine is not available, we use a heuristic or return an informative error
-            # For now, let's try a "Simulated AI" that detects basic features if librosa is available
             return await self._heuristic_transcription(audio_path, original_filename)
 
         loop = asyncio.get_event_loop()
@@ -40,55 +38,82 @@ class TranscriptionService:
 
     async def _heuristic_transcription(self, audio_path, filename):
         """
-        Fallback when high-end AI is not available.
-        Uses librosa for onset detection or simple audio analysis.
+        Advanced Heuristic Audio -> MIDI using Librosa.
+        Detects onsets, pitches, and dynamic durations.
         """
-        print("AI: Running Heuristic Fallback...")
+        print("AI: Running ADVANCED Heuristic Fallback...")
         try:
             import librosa
-            # Simple onset detection to at least show 'something' is happening
             y, sr = librosa.load(audio_path)
-            onsets = librosa.onset.onset_detect(y=y, sr=sr, units='time')
             
-            # Create a very simple rhythmic pattern based on onsets
+            # 1. Onset detection (When notes start)
+            onsets = librosa.onset.onset_detect(y=y, sr=sr, units='time', backtrack=True)
+            if len(onsets) == 0:
+                return self._build_empty_response(filename, "No se detectaron notas")
+
+            # 2. Pitch detection (What notes are they)
+            # Use YIN algorithm for more stable pitch detection in monophonic/clear audio
+            f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'))
+            times = librosa.times_like(f0)
+
             notes = []
-            for i, start_t in enumerate(onsets):
+            for i in range(len(onsets)):
+                start_t = onsets[i]
+                # End time is the next onset or the end of the file
+                end_t = onsets[i+1] if i + 1 < len(onsets) else librosa.get_duration(y=y, sr=sr)
+                duration = max(0.1, end_t - start_t)
+
+                # Find the most frequent pitch in this time window
+                mask = (times >= start_t) & (times < end_t)
+                window_pitches = f0[mask]
+                valid_pitches = window_pitches[~np.isnan(window_pitches)]
+                
+                if len(valid_pitches) > 0:
+                    # Get median frequency and convert to MIDI
+                    freq = np.median(valid_pitches)
+                    midi = int(round(librosa.hz_to_midi(freq)))
+                else:
+                    # Fallback to a central note if detection fails
+                    midi = 60 
+
+                # 3. Velocity detection (How loud)
+                # Calculate RMS energy in the window
+                start_sample = int(start_t * sr)
+                end_sample = int(end_t * sr)
+                window_y = y[start_sample:end_sample]
+                rms = np.sqrt(np.mean(window_y**2)) if len(window_y) > 0 else 0
+                velocity = int(min(127, max(40, rms * 400))) # Scaled heuristic
+
                 notes.append({
                     "id": f"h{i}",
-                    "midi": 60 + (i % 12), # Dummy melody
-                    "name": self._midi_to_name(60 + (i % 12)),
+                    "midi": midi,
+                    "name": self._midi_to_name(midi),
                     "startTime": float(start_t),
-                    "duration": 0.5,
-                    "hand": "right",
-                    "velocity": 80
+                    "duration": float(duration),
+                    "hand": "right" if midi >= 60 else "left",
+                    "velocity": velocity
                 })
-            
+
+            # Separate into tracks based on hand
+            rh_notes = [n for n in notes if n["hand"] == "right"]
+            lh_notes = [n for n in notes if n["hand"] == "left"]
+
             return {
                 "id": str(uuid.uuid4())[:8],
-                "title": f"{os.path.splitext(filename)[0]} (Heuristic)",
-                "composer": "AI Heuristic",
+                "title": f"{os.path.splitext(filename)[0]} (Transcripción IA)",
+                "composer": "Heurística Avanzada",
                 "tempo": 120,
                 "timeSignature": [4, 4],
                 "totalDuration": float(librosa.get_duration(y=y, sr=sr)),
                 "sourceType": "audio",
-                "tracks": [{"id": "h1", "name": "Detección Rítmica", "hand": "right", "color": "#6366f1", "notes": notes}]
+                "tracks": [
+                    {"id": "rh", "name": "Mano Derecha", "hand": "right", "color": "#6366f1", "notes": rh_notes},
+                    {"id": "lh", "name": "Mano Izquierda", "hand": "left", "color": "#ec4899", "notes": lh_notes}
+                ]
             }
         except Exception as e:
-            print(f"AI ERROR: Fallback failed: {str(e)}")
-            # Last resort: informative error song
-            return {
-                "id": "error",
-                "title": "Error de Configuración IA",
-                "composer": "Sistema",
-                "tempo": 120,
-                "timeSignature": [4, 4],
-                "totalDuration": 5,
-                "tracks": [{
-                    "id": "err", "name": "Error", "hand": "right", "notes": [
-                        {"id": "e1", "midi": 60, "name": "C4", "startTime": 0, "duration": 4, "hand": "right", "velocity": 0}
-                    ]
-                }]
-            }
+            print(f"AI ERROR: Advanced Fallback failed: {str(e)}")
+            return self._build_empty_response(filename, str(e))
 
     def _midi_to_song_json(self, midi_data, filename):
         try:
@@ -96,6 +121,7 @@ class TranscriptionService:
             pretty_midi = importlib.import_module('pretty_midi')
         except (ImportError, ModuleNotFoundError):
             print("AI WARNING: pretty_midi not found. Basic Pitch output might fail.")
+            
         title = os.path.splitext(filename)[0]
         song_id = str(uuid.uuid4())[:8]
         rh_notes = []
@@ -129,6 +155,12 @@ class TranscriptionService:
                 {"id": f"{song_id}-rh", "name": "Mano Derecha (IA)", "hand": "right", "color": "#6366f1", "notes": rh_notes},
                 {"id": f"{song_id}-lh", "name": "Mano Izquierda (IA)", "hand": "left", "color": "#ec4899", "notes": lh_notes}
             ]
+        }
+
+    def _build_empty_response(self, filename, reason):
+        return {
+            "id": "error", "title": f"Error: {reason}", "composer": "Sistema", "tempo": 120,
+            "timeSignature": [4, 4], "totalDuration": 5, "tracks": []
         }
 
     def _midi_to_name(self, midi):
