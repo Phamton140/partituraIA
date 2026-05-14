@@ -15,7 +15,7 @@ class TranscriptionService:
             self.engine_ready = True
             print("AI: Basic Pitch Engine Loaded Successfully.")
         except (ImportError, ModuleNotFoundError):
-            print("AI WARNING: Basic Pitch not installed. Using Optimized Heuristic.")
+            print("AI WARNING: Basic Pitch not installed. Using POLYPHONIC Heuristic.")
             self.predict = None
 
     async def transcribe_audio(self, audio_path: str, original_filename: str):
@@ -38,30 +38,33 @@ class TranscriptionService:
 
     async def _heuristic_transcription(self, audio_path, filename):
         """
-        ULTRA-FAST Heuristic Audio -> MIDI using Librosa.
-        Optimized for speed to avoid timeouts.
+        POLYPHONIC Heuristic Audio -> MIDI using Librosa Chromagram.
+        Now detects chords and multiple simultaneous notes.
         """
-        print("AI: Running ULTRA-FAST Heuristic...")
+        print("AI: Running POLYPHONIC Heuristic...")
         try:
             import librosa
-            # Load with downsampling to 22050 for speed
             y, sr = librosa.load(audio_path, sr=22050)
             
-            # Limit to first 5 minutes to prevent infinite hangs
-            duration_limit = 300 # seconds
+            # Limit duration for speed
+            duration_limit = 300
             if len(y) > duration_limit * sr:
                 y = y[:duration_limit * sr]
 
-            # 1. Onset detection (FAST)
+            # 1. Onset detection
             onset_env = librosa.onset.onset_strength(y=y, sr=sr)
             onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, units='time')
             
             if len(onsets) == 0:
                 return self._build_empty_response(filename, "No se detectó sonido claro")
 
-            # 2. Pitch detection (FAST via piptrack instead of pyin)
-            # piptrack is orders of magnitude faster than pyin
-            pitches, magnitudes = librosa.piptrack(y=y, sr=sr, n_fft=2048, hop_length=512)
+            # 2. Chromagram for Chord detection
+            # Chroma represents the 12 pitch classes (C, C#, D...)
+            chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=512)
+            
+            # 3. Spectral Centroid to determine the Octave
+            # (Chroma tells us 'C', Centroid tells us 'C4' vs 'C2')
+            centroid = librosa.feature.spectral_centroid(y=y, sr=sr, hop_length=512)[0]
 
             notes = []
             total_dur = librosa.get_duration(y=y, sr=sr)
@@ -71,34 +74,39 @@ class TranscriptionService:
                 end_t = onsets[i+1] if i + 1 < len(onsets) else total_dur
                 duration = max(0.1, end_t - start_t)
 
-                # Find the pitch at the start of the onset (more accurate for piano)
                 frame = librosa.time_to_frames(start_t, sr=sr, hop_length=512)
-                if frame < pitches.shape[1]:
-                    index = magnitudes[:, frame].argmax()
-                    pitch_hz = pitches[index, frame]
-                    if pitch_hz > 0:
-                        midi = int(round(librosa.hz_to_midi(pitch_hz)))
-                    else:
-                        midi = 60 # C4
-                else:
-                    midi = 60
+                if frame >= chroma.shape[1]: continue
 
-                # Sanity check for MIDI range
-                midi = max(21, min(108, midi))
+                # Get the 12-note profile for this moment
+                chroma_frame = chroma[:, frame]
+                
+                # Threshold to detect multiple notes (Acordes)
+                # We pick peaks in the chromagram
+                # Thresholding at 60% of the maximum peak in this frame
+                threshold = np.max(chroma_frame) * 0.6
+                pitch_classes = np.where(chroma_frame > threshold)[0]
 
-                # 3. Simple Velocity based on onset strength
-                strength = onset_env[min(frame, len(onset_env)-1)]
-                velocity = int(min(127, max(40, strength * 10)))
+                # Determine base octave based on spectral centroid
+                # Heuristic: centroid 1000Hz ~ C5, 500Hz ~ C4, 250Hz ~ C3
+                avg_centroid = centroid[frame]
+                base_octave = int(np.clip(np.log2(avg_centroid / 32.7) - 1, 2, 6))
 
-                notes.append({
-                    "id": f"f{i}",
-                    "midi": midi,
-                    "name": self._midi_to_name(midi),
-                    "startTime": float(start_t),
-                    "duration": float(duration),
-                    "hand": "right" if midi >= 60 else "left",
-                    "velocity": velocity
-                })
+                # For each detected pitch class, add a note
+                for pc in pitch_classes:
+                    midi = (base_octave + 1) * 12 + pc
+                    
+                    # Sanity check for MIDI range
+                    midi = max(21, min(108, midi))
+
+                    notes.append({
+                        "id": f"p{i}-{pc}",
+                        "midi": int(midi),
+                        "name": self._midi_to_name(midi),
+                        "startTime": float(start_t),
+                        "duration": float(duration),
+                        "hand": "right" if midi >= 55 else "left", # Split at G3
+                        "velocity": int(min(127, max(40, chroma_frame[pc] * 100)))
+                    })
 
             # Separate and return
             rh_notes = [n for n in notes if n["hand"] == "right"]
@@ -106,8 +114,8 @@ class TranscriptionService:
 
             return {
                 "id": str(uuid.uuid4())[:8],
-                "title": f"{os.path.splitext(filename)[0]} (IA Rápida)",
-                "composer": "Optimized Heuristic",
+                "title": f"{os.path.splitext(filename)[0]} (IA Polifónica)",
+                "composer": "Poly-Heuristic",
                 "tempo": 120,
                 "timeSignature": [4, 4],
                 "totalDuration": float(total_dur),
@@ -118,15 +126,15 @@ class TranscriptionService:
                 ]
             }
         except Exception as e:
-            print(f"AI ERROR: Ultra-fast failed: {str(e)}")
+            print(f"AI ERROR: Polyphonic failed: {str(e)}")
             return self._build_empty_response(filename, str(e))
 
     def _midi_to_song_json(self, midi_data, filename):
+        import importlib
         try:
-            import importlib
             pretty_midi = importlib.import_module('pretty_midi')
-        except (ImportError, ModuleNotFoundError):
-            print("AI WARNING: pretty_midi not found.")
+        except:
+            pass
             
         title = os.path.splitext(filename)[0]
         song_id = str(uuid.uuid4())[:8]
