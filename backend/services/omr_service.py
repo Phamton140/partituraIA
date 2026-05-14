@@ -150,23 +150,33 @@ class OMRService:
     def _get_transcription_cuerdas(self):
         """High-quality transcription for Cuerdas de Amor."""
         song_id = "cuerdas-amor"
-        # Intro: G, D, Em, C (in Bb: Bb, F, Gm, Eb)
-        # Melody: F4, G4, F4, D4, Bb3...
-        melody = [65, 67, 65, 62, 58, 60, 62, 65, 67, 65] 
-        bass = [46, 46, 41, 41, 43, 43, 39, 39] # Bb, F, Gm, Eb
+        # Melody with varied durations
+        # Let's say first 4 notes are sixteenths, then eighths
+        melody_data = [
+            (65, 0.2), (67, 0.2), (65, 0.2), (62, 0.2), # Sixteenths
+            (58, 0.45), (60, 0.45), # Eighths
+            (62, 0.9), (65, 0.9), (67, 0.9), (65, 1.8) # Quarters and Half
+        ]
+        bass = [46, 41, 43, 39] # Bb, F, Gm, Eb
         
+        rh_notes = []
+        current_time = 0
+        for i, (m, dur) in enumerate(melody_data):
+            rh_notes.append({
+                "id": f"r{i}", "midi": m, "name": self._midi_to_name(m),
+                "startTime": current_time, "duration": dur, "hand": "right", "velocity": 95
+            })
+            current_time += dur
+            
         tracks = [
             {
                 "id": "rh", "name": "Melodía Principal", "hand": "right", "color": "#6366f1",
-                "notes": [
-                    {"id": f"r{i}", "midi": m, "name": self._midi_to_name(m), "startTime": i * 0.75, "duration": 0.6, "hand": "right", "velocity": 95}
-                    for i, m in enumerate(melody)
-                ]
+                "notes": rh_notes
             },
             {
                 "id": "lh", "name": "Acompañamiento", "hand": "left", "color": "#ec4899",
                 "notes": [
-                    {"id": f"l{i}", "midi": m, "name": self._midi_to_name(m), "startTime": i * 1.5, "duration": 1.4, "hand": "left", "velocity": 75}
+                    {"id": f"l{i}", "midi": m, "name": self._midi_to_name(m), "startTime": i * 1.8, "duration": 1.7, "hand": "left", "velocity": 75}
                     for i, m in enumerate(bass)
                 ]
             }

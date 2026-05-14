@@ -41,9 +41,16 @@ const SheetMusicView: React.FC<SheetMusicViewProps> = ({ song, playback }) => {
     if (activeNotes.length === 0) return;
 
     const notes = activeNotes.map(n => {
-      // Convert MIDI to VexFlow key format (e.g. 60 -> c/4)
+      // Calculate rhythmic value based on duration and tempo
+      const quarterTime = 60 / song.tempo;
+      const beats = n.duration / quarterTime;
+      
+      let duration = 'q';
+      if (beats <= 0.3) duration = '16';
+      else if (beats <= 0.7) duration = '8';
+      else if (beats >= 1.5) duration = 'h';
+      
       const keys = [thisMidiToVexKey(n.midi)];
-      const duration = 'q'; // Assume quarter for now
       const sn = new StaveNote({ keys, duration });
       
       // Add accidentals if needed
