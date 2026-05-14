@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    PartituraAI — Global Design System
    Premium dark theme with violet/pink accent palette
-   (Fixed CSS Errors & High-Contrast Sheet Music)
+   (Final Clean Version)
 ═══════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap');
@@ -173,6 +173,30 @@ input[type=range] { cursor: pointer; }
 .sidebar::-webkit-scrollbar { width: 4px; }
 .sidebar::-webkit-scrollbar-track { background: transparent; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+
+.sidebar-section {
+  padding: 10px;
+}
+.section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  padding-left: 5px;
+}
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 10px 0;
+}
+.sidebar-section.beta {
+  opacity: 0.7;
+}
+.sidebar-section.beta:hover {
+  opacity: 1;
+}
 
 /* ─── Main content ──────────────────────────────────────────────── */
 .main-content {
@@ -474,6 +498,21 @@ input[type=range] { cursor: pointer; }
   color: var(--accent-violet);
   margin-bottom: 10px;
 }
+
+.icon-stack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-overlay {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  color: var(--accent-gold);
+  filter: drop-shadow(0 0 5px rgba(245,158,11,0.5));
+}
+
 .drop-title {
   font-size: 0.82rem;
   font-weight: 600;
@@ -502,12 +541,13 @@ input[type=range] { cursor: pointer; }
 }
 .badge.pdf { color: var(--accent-gold); border-color: rgba(245,158,11,0.3); }
 
-.omr-notice {
+.ai-notice {
   display: flex; align-items: center; gap: 5px;
   font-size: 0.64rem;
   color: var(--text-muted);
   justify-content: center;
   line-height: 1.4;
+  margin-top: 10px;
 }
 
 .analysis-progress { width: 100%; }
@@ -831,5 +871,3 @@ input[type=range] { cursor: pointer; }
   .sidebar.closed { height: 0; }
   .piano-keyboard-wrapper { height: 90px; }
 }
-$css
-$css
