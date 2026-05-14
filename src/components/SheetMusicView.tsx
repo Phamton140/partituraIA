@@ -57,15 +57,20 @@ const SheetMusicView: React.FC<SheetMusicViewProps> = ({ song, playback }) => {
       return sn;
     });
 
-    // Create a voice in 4/4 and add notes
-    const voice = new Voice({ numBeats: 4, beatValue: 4 });
-    voice.addTickables(notes);
+    try {
+      // Create a voice in 4/4 and add notes
+      const voice = new Voice({ numBeats: 4, beatValue: 4 });
+      voice.setStrict(false); // Don't throw if measure is incomplete
+      voice.addTickables(notes);
 
-    // Format and justify the notes to 700 pixels.
-    new Formatter().joinVoices([voice]).format([voice], 700);
+      // Format and justify the notes to 700 pixels.
+      new Formatter().joinVoices([voice]).format([voice], 700);
 
-    // Render voice
-    voice.draw(context, stave);
+      // Render voice
+      voice.draw(context, stave);
+    } catch (err) {
+      console.warn('VexFlow rendering error:', err);
+    }
 
   }, [song, playback.currentTime]);
 

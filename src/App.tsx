@@ -10,6 +10,7 @@ import { initAudio, stopAll, isAudioReady, scheduleSong } from './engine/audioEn
 import { initMidi } from './engine/midiEngine';
 import SettingsModal from './components/SettingsModal';
 import SheetMusicView from './components/SheetMusicView';
+import ErrorBoundary from './components/ErrorBoundary';
 import type { Song } from './types/music';
 import { Piano, Sparkles, Menu, X, Settings as SettingsIcon } from 'lucide-react';
 import * as Tone from 'tone';
@@ -225,7 +226,9 @@ function App() {
         <main className="main-content">
           {song && (
             <div className="sheet-music-wrapper">
-              <SheetMusicView song={song} playback={playback} />
+              <ErrorBoundary>
+                <SheetMusicView song={song} playback={playback} />
+              </ErrorBoundary>
             </div>
           )}
           
