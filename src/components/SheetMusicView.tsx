@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Renderer, Stave, StaveNote, Voice, Formatter, Accidental } from 'vexflow';
+import { Renderer, Stave, StaveNote, Voice, Formatter, Accidental, Beam } from 'vexflow';
 import type { Song, PlaybackState } from '../types/music';
 
 interface SheetMusicViewProps {
@@ -77,6 +77,31 @@ const SheetMusicView: React.FC<SheetMusicViewProps> = ({ song, playback }) => {
 
       // Render voice
       voice.draw(context, stave);
+
+      // --- Beam Logic ---
+      const beamableDurations = ['8', '16', '32'];
+      const beamGroups: StaveNote[][] = [];
+      let currentGroup: StaveNote[] = [];
+
+      notes.forEach((sn) => {
+        const dur = sn.getDuration();
+        if (beamableDurations.includes(dur)) {
+          currentGroup.push(sn);
+        } else {
+          if (currentGroup.length > 1) {
+            beamGroups.push([...currentGroup]);
+          }
+          currentGroup = [];
+        }
+      });
+      if (currentGroup.length > 1) {
+        beamGroups.push(currentGroup);
+      }
+
+      // Draw beams
+      const beams = beamGroups.map(group => new Beam(group));
+      beams.forEach(b => b.setContext(context).draw());
+
     } catch (err) {
       console.warn('VexFlow rendering error:', err);
     }
