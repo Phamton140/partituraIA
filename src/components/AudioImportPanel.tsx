@@ -7,6 +7,7 @@ import type { AnalysisResult } from '../types/music';
 const AudioImportPanel: React.FC = () => {
   const { setSong } = useMusicStore();
   const [result, setResult] = useState<AnalysisResult>({ status: 'idle', progress: 0, stage: '' });
+  const [ytUrl, setYtUrl] = useState('');
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -49,6 +50,48 @@ const AudioImportPanel: React.FC = () => {
       setResult({ status: 'error', progress: 0, stage: '', error: message });
     }
   }, [setSong]);
+
+  const onYoutubeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ytUrl.trim()) return;
+
+    setResult({ status: 'processing', progress: 10, stage: 'Descargando desde YouTube...' });
+
+    const formData = new FormData();
+    formData.append('url', ytUrl);
+
+    try {
+      setResult(prev => ({ ...prev, progress: 40, stage: 'IA Transcribiendo audio de YouTube...' }));
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minute timeout for YT
+
+      const response = await fetch('http://localhost:8000/api/audio/youtube', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Fallo en la transcripción de YouTube');
+      }
+
+      const songData = await response.json();
+      setResult({ status: 'success', progress: 100, stage: 'Transcripción completada' });
+      setSong(songData);
+      setYtUrl('');
+
+      setTimeout(() => setResult({ status: 'idle', progress: 0, stage: '' }), 3000);
+    } catch (err) {
+      const message = (err as any).name === 'AbortError' 
+        ? 'El proceso tardó demasiado (Tiempo agotado)' 
+        : (err as Error).message;
+      setResult({ status: 'error', progress: 0, stage: '', error: message });
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -110,6 +153,21 @@ const AudioImportPanel: React.FC = () => {
           </div>
         )}
       </div>
+      
+      {result.status === 'idle' && (
+        <form className="youtube-input-container" onSubmit={onYoutubeSubmit}>
+          <input 
+            type="text" 
+            placeholder="Pegar URL de YouTube..." 
+            value={ytUrl}
+            onChange={(e) => setYtUrl(e.target.value)}
+            className="youtube-url-input"
+          />
+          <button type="submit" className="youtube-submit-btn" disabled={!ytUrl.trim()}>
+            Importar
+          </button>
+        </form>
+      )}
       
       <div className="omr-notice">
         <Wand2 size={12} />

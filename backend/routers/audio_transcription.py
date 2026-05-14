@@ -1,10 +1,12 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 import os
 import uuid
 from backend.services.transcription_service import TranscriptionService
+from backend.services.youtube_service import YouTubeService
 
 router = APIRouter()
 transcription_service = TranscriptionService()
+yt_service = YouTubeService()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
@@ -37,6 +39,22 @@ async def transcribe_audio(file: UploadFile = File(...)):
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+
+@router.post("/youtube")
+async def transcribe_youtube(url: str = Form(...)):
+    """Downloads and transcribes audio from a YouTube URL."""
+    try:
+        audio_path, title = yt_service.download_audio(url)
+        # Process with AI
+        song_data = await transcription_service.transcribe_audio(audio_path, title)
+        
+        # Cleanup
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+            
+        return song_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/status")
 async def get_status():
