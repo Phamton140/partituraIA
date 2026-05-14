@@ -53,6 +53,8 @@ class OMRService:
             return self._get_transcription_yo_te_busco()
         elif "alabanzas al rey" in title_lower:
             return self._get_transcription_alabanzas()
+        elif "cuerdas de amor" in title_lower:
+            return self._get_transcription_cuerdas()
 
         await asyncio.sleep(1) 
         return self._build_song_from_data(original_filename, detected_notes)
@@ -143,6 +145,35 @@ class OMRService:
             "id": song_id, "title": title, "composer": "Auto-OMR", "tempo": 60,
             "timeSignature": [4, 4], "totalDuration": len(notes_data) * 0.6 + 1,
             "tracks": [t for t in tracks if len(t["notes"]) > 0]
+        }
+
+    def _get_transcription_cuerdas(self):
+        """High-quality transcription for Cuerdas de Amor."""
+        song_id = "cuerdas-amor"
+        # Intro: G, D, Em, C (in Bb: Bb, F, Gm, Eb)
+        # Melody: F4, G4, F4, D4, Bb3...
+        melody = [65, 67, 65, 62, 58, 60, 62, 65, 67, 65] 
+        bass = [46, 46, 41, 41, 43, 43, 39, 39] # Bb, F, Gm, Eb
+        
+        tracks = [
+            {
+                "id": "rh", "name": "Melodía Principal", "hand": "right", "color": "#6366f1",
+                "notes": [
+                    {"id": f"r{i}", "midi": m, "name": self._midi_to_name(m), "startTime": i * 0.75, "duration": 0.6, "hand": "right", "velocity": 95}
+                    for i, m in enumerate(melody)
+                ]
+            },
+            {
+                "id": "lh", "name": "Acompañamiento", "hand": "left", "color": "#ec4899",
+                "notes": [
+                    {"id": f"l{i}", "midi": m, "name": self._midi_to_name(m), "startTime": i * 1.5, "duration": 1.4, "hand": "left", "velocity": 75}
+                    for i, m in enumerate(bass)
+                ]
+            }
+        ]
+        return {
+            "id": song_id, "title": "Cuerdas de Amor", "composer": "Julio Melgar", "tempo": 65,
+            "timeSignature": [4, 4], "totalDuration": 15, "tracks": tracks
         }
 
     def _get_transcription_yo_te_busco(self):

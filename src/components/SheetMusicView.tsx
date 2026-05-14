@@ -22,7 +22,9 @@ const SheetMusicView: React.FC<SheetMusicViewProps> = ({ song, playback }) => {
     // Configure renderer
     renderer.resize(800, 200);
     const context = renderer.getContext();
-    context.setFont('Arial', 10, '').setBackgroundFillStyle('#eed');
+    context.setFillStyle('#000000');
+    context.setStrokeStyle('#000000');
+    context.setFont('Arial', 10, '');
 
     // Create a stave at position 10, 40 on canvas, 700 pixels wide.
     const stave = new Stave(10, 40, 750);

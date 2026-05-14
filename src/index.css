@@ -807,3 +807,4 @@ input[type=range] { cursor: pointer; }
 }
 $css
 .sheet-music-wrapper { flex-shrink: 0; background: #fff; border-bottom: 1px solid var(--border-subtle); overflow: hidden; }
+$css
