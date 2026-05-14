@@ -19,7 +19,7 @@ const SongLibrary: React.FC<SongLibraryProps> = ({ currentSong, onSelect }) => {
     <div className="song-library">
       <div className="library-header">
         <BookOpen size={16} />
-        <span>Demo Library</span>
+        <span>Biblioteca de Demos</span>
       </div>
 
       <div className="library-list">

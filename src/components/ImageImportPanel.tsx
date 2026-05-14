@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Upload, Music, Image, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import type { Song } from '../types/music';
 import type { AnalysisResult } from '../types/music';
-import { parseMidiFile } from '../engine/omrEngine';
-import { analyzeSheetImage } from '../engine/omrEngine';
+import { parseMidiFile } from '../engine/musicParser';
+import { analyzeSheetImage } from '../engine/musicParser';
 
 interface ImageImportPanelProps {
   onSongLoaded: (song: Song) => void;

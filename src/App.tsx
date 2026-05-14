@@ -259,8 +259,8 @@ function App() {
             {!song && (
               <div className="empty-roll">
                 <Piano size={48} className="empty-icon" />
-                <h2>Select or import a song to begin</h2>
-                <p>Choose a demo from the library or upload a MIDI / sheet image</p>
+                <h2>Selecciona o sube una canción para comenzar</h2>
+                <p>Elige una demostración de la biblioteca o sube un archivo de Audio/Imagen</p>
               </div>
             )}
             <SynthesiaRoll song={song} playback={playback} onSeek={handleSeek} />
