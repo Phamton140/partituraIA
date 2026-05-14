@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Music, Upload, CheckCircle, AlertCircle, Loader2, Wand2 } from 'lucide-react';
+import { Music, CheckCircle, AlertCircle, Loader2, Wand2 } from 'lucide-react';
 import { useMusicStore } from '../store/useMusicStore';
 import type { AnalysisResult } from '../types/music';
 

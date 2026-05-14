@@ -90,7 +90,10 @@ class TranscriptionService:
             }
 
     def _midi_to_song_json(self, midi_data, filename):
-        import pretty_midi
+        try:
+            import pretty_midi
+        except ImportError:
+            print("AI WARNING: pretty_midi not found. Basic Pitch output might fail.")
         title = os.path.splitext(filename)[0]
         song_id = str(uuid.uuid4())[:8]
         rh_notes = []
