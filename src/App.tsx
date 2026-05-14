@@ -296,12 +296,6 @@ function App() {
       />
     </div>
   );
-
-  function handleSongLoad(newSong: Song) {
-    stopTick();
-    stopAll();
-    setSong(newSong);
-  }
 }
 
 export default App;
