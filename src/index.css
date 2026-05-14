@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    PartituraAI — Global Design System
    Premium dark theme with violet/pink accent palette
-   (Fixed Modal Styles & Design Cleanup)
+   (Fixed CSS Errors & High-Contrast Sheet Music)
 ═══════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap');
@@ -183,6 +183,32 @@ input[type=range] { cursor: pointer; }
   min-width: 0;
 }
 
+/* ─── Sheet Music View ─────────────────────────────────────────── */
+.sheet-music-wrapper {
+  flex-shrink: 0;
+  background: #ffffff !important;
+  padding: 10px;
+  border-bottom: 2px solid var(--accent-violet);
+  z-index: 10;
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.sheet-music-container {
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border-radius: var(--radius-md);
+  min-width: 800px;
+  padding: 10px;
+}
+
+.vex-container svg {
+  display: block;
+  margin: 0 auto;
+}
+
 /* ─── Synthesia roll ────────────────────────────────────────────── */
 .roll-container {
   flex: 1;
@@ -245,8 +271,8 @@ input[type=range] { cursor: pointer; }
   padding: 0 0 6px;
   font-size: 0.7rem;
 }
-.legend-right { color: var(--accent-violet-light); }
 .legend-left  { color: var(--accent-pink-light); }
+.legend-right { color: var(--accent-violet-light); }
 
 .piano-keyboard-wrapper {
   height: 130px;
@@ -805,6 +831,3 @@ input[type=range] { cursor: pointer; }
   .sidebar.closed { height: 0; }
   .piano-keyboard-wrapper { height: 90px; }
 }
-$css
-.sheet-music-wrapper { flex-shrink: 0; background: #fff; border-bottom: 1px solid var(--border-subtle); overflow: hidden; }
-$css
