@@ -7,13 +7,14 @@ class TranscriptionService:
     def __init__(self):
         self.engine_ready = False
         try:
-            from basic_pitch.inference import predict
-            from basic_pitch import ICASSP_2022_MODEL_PATH
-            self.predict = predict
-            self.model_path = ICASSP_2022_MODEL_PATH
+            import importlib
+            bp_inference = importlib.import_module('basic_pitch.inference')
+            bp_main = importlib.import_module('basic_pitch')
+            self.predict = bp_inference.predict
+            self.model_path = bp_main.ICASSP_2022_MODEL_PATH
             self.engine_ready = True
             print("AI: Basic Pitch Engine Loaded Successfully.")
-        except ImportError:
+        except (ImportError, ModuleNotFoundError):
             print("AI WARNING: Basic Pitch not installed. Using Heuristic Fallback.")
             self.predict = None
 
@@ -91,8 +92,9 @@ class TranscriptionService:
 
     def _midi_to_song_json(self, midi_data, filename):
         try:
-            import pretty_midi
-        except ImportError:
+            import importlib
+            pretty_midi = importlib.import_module('pretty_midi')
+        except (ImportError, ModuleNotFoundError):
             print("AI WARNING: pretty_midi not found. Basic Pitch output might fail.")
         title = os.path.splitext(filename)[0]
         song_id = str(uuid.uuid4())[:8]
