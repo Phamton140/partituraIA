@@ -4,6 +4,7 @@ import numpy as np
 import time
 import asyncio
 import uuid
+import fitz  # PyMuPDF
 
 class OMRService:
     def __init__(self):
@@ -20,16 +21,33 @@ class OMRService:
         """
         print(f"OMR: Analyzing {file_path}")
         
-        # Load image robustly (handles non-ASCII paths and more formats)
+        # Load image robustly
         if not os.path.exists(file_path):
             raise ValueError(f"File not found at: {file_path}")
             
-        with open(file_path, "rb") as f:
-            chunk = np.frombuffer(f.read(), dtype=np.uint8)
-            img = cv2.imdecode(chunk, cv2.IMREAD_COLOR)
+        ext = os.path.splitext(file_path)[1].lower()
+        img = None
+
+        if ext == '.pdf':
+            # Convert PDF to Image (first page)
+            doc = fitz.open(file_path)
+            page = doc.load_page(0)
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2)) # Higher DPI
+            img_data = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
+            # If CMYK or RGBA, convert to BGR
+            if pix.n == 4:
+                img = cv2.cvtColor(img_data, cv2.COLOR_RGBA2BGR)
+            else:
+                img = cv2.cvtColor(img_data, cv2.COLOR_RGB2BGR)
+            doc.close()
+        else:
+            # Load standard image formats
+            with open(file_path, "rb") as f:
+                chunk = np.frombuffer(f.read(), dtype=np.uint8)
+                img = cv2.imdecode(chunk, cv2.IMREAD_COLOR)
             
         if img is None:
-            raise ValueError(f"OpenCV could not decode image: {file_path}")
+            raise ValueError(f"Could not decode file as image or PDF: {file_path}")
             
         # 1. Preprocessing
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
