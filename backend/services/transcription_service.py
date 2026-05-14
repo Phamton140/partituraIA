@@ -15,7 +15,7 @@ class TranscriptionService:
             self.engine_ready = True
             print("AI: Basic Pitch Engine Loaded Successfully.")
         except (ImportError, ModuleNotFoundError):
-            print("AI WARNING: Basic Pitch not installed. Using POLYPHONIC Heuristic.")
+            print("AI WARNING: Basic Pitch not installed. Using SCALE-AWARE Heuristic.")
             self.predict = None
 
     async def transcribe_audio(self, audio_path: str, original_filename: str):
@@ -38,33 +38,58 @@ class TranscriptionService:
 
     async def _heuristic_transcription(self, audio_path, filename):
         """
-        POLYPHONIC Heuristic Audio -> MIDI using Librosa Chromagram.
-        Now detects chords and multiple simultaneous notes.
+        SCALE-AWARE Polyphonic Heuristic Audio -> MIDI.
+        Detects global key and filters dissonant notes.
         """
-        print("AI: Running POLYPHONIC Heuristic...")
+        print("AI: Running SCALE-AWARE Heuristic...")
         try:
             import librosa
             y, sr = librosa.load(audio_path, sr=22050)
             
-            # Limit duration for speed
-            duration_limit = 300
-            if len(y) > duration_limit * sr:
-                y = y[:duration_limit * sr]
+            # 0. Harmonic/Percussive separation (Filter out noise/drums)
+            y_harmonic = librosa.effects.harmonic(y)
+            
+            # 1. Global Key Detection (to filter dissonance)
+            chroma_global = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr).mean(axis=1)
+            # Simple major/minor templates
+            major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+            minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+            
+            best_key = 0
+            best_score = -1
+            is_major = True
+            
+            for i in range(12):
+                # Rotate templates to test each key
+                m_score = np.corrcoef(chroma_global, np.roll(major_profile, i))[0, 1]
+                mi_score = np.corrcoef(chroma_global, np.roll(minor_profile, i))[0, 1]
+                if m_score > best_score:
+                    best_score = m_score
+                    best_key = i
+                    is_major = True
+                if mi_score > best_score:
+                    best_score = mi_score
+                    best_key = i
+                    is_major = False
 
-            # 1. Onset detection
-            onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+            # Define allowed notes in the scale (1 = allowed, 0.4 = penalized)
+            # Major scale steps: 2, 2, 1, 2, 2, 2, 1
+            # Minor scale steps: 2, 1, 2, 2, 1, 2, 2
+            scale_intervals = [0, 2, 4, 5, 7, 9, 11] if is_major else [0, 2, 3, 5, 7, 8, 10]
+            allowed_pcs = [(best_key + step) % 12 for step in scale_intervals]
+            
+            print(f"AI: Detected Key: {self._midi_to_name(best_key+60)[:-1]} {'Major' if is_major else 'Minor'}")
+
+            # 2. Onset detection
+            onset_env = librosa.onset.onset_strength(y=y_harmonic, sr=sr)
             onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, units='time')
             
             if len(onsets) == 0:
-                return self._build_empty_response(filename, "No se detectó sonido claro")
+                return self._build_empty_response(filename, "No clear notes found")
 
-            # 2. Chromagram for Chord detection
-            # Chroma represents the 12 pitch classes (C, C#, D...)
-            chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=512)
-            
-            # 3. Spectral Centroid to determine the Octave
-            # (Chroma tells us 'C', Centroid tells us 'C4' vs 'C2')
-            centroid = librosa.feature.spectral_centroid(y=y, sr=sr, hop_length=512)[0]
+            # 3. Chroma & Centroid
+            chroma = librosa.feature.chroma_cqt(y=y_harmonic, sr=sr, hop_length=512)
+            centroid = librosa.feature.spectral_centroid(y=y_harmonic, sr=sr, hop_length=512)[0]
 
             notes = []
             total_dur = librosa.get_duration(y=y, sr=sr)
@@ -77,25 +102,26 @@ class TranscriptionService:
                 frame = librosa.time_to_frames(start_t, sr=sr, hop_length=512)
                 if frame >= chroma.shape[1]: continue
 
-                # Get the 12-note profile for this moment
                 chroma_frame = chroma[:, frame]
                 
-                # Threshold to detect multiple notes (Acordes)
-                # We pick peaks in the chromagram
-                # Thresholding at 60% of the maximum peak in this frame
-                threshold = np.max(chroma_frame) * 0.6
+                # Dynamic thresholding based on average energy
+                avg_energy = np.mean(chroma_frame)
+                threshold = max(0.4, avg_energy * 1.5)
+                
+                # Detect peaks
                 pitch_classes = np.where(chroma_frame > threshold)[0]
 
-                # Determine base octave based on spectral centroid
-                # Heuristic: centroid 1000Hz ~ C5, 500Hz ~ C4, 250Hz ~ C3
                 avg_centroid = centroid[frame]
                 base_octave = int(np.clip(np.log2(avg_centroid / 32.7) - 1, 2, 6))
 
-                # For each detected pitch class, add a note
                 for pc in pitch_classes:
+                    # Dissonance filtering: 
+                    # If the note is not in the detected scale, it must be MUCH stronger to be included
+                    is_in_scale = pc in allowed_pcs
+                    if not is_in_scale and chroma_frame[pc] < threshold * 1.8:
+                        continue # Filter out noisy dissonant notes
+
                     midi = (base_octave + 1) * 12 + pc
-                    
-                    # Sanity check for MIDI range
                     midi = max(21, min(108, midi))
 
                     notes.append({
@@ -104,29 +130,25 @@ class TranscriptionService:
                         "name": self._midi_to_name(midi),
                         "startTime": float(start_t),
                         "duration": float(duration),
-                        "hand": "right" if midi >= 55 else "left", # Split at G3
-                        "velocity": int(min(127, max(40, chroma_frame[pc] * 100)))
+                        "hand": "right" if midi >= 55 else "left",
+                        "velocity": int(min(127, max(40, chroma_frame[pc] * 110)))
                     })
-
-            # Separate and return
-            rh_notes = [n for n in notes if n["hand"] == "right"]
-            lh_notes = [n for n in notes if n["hand"] == "left"]
 
             return {
                 "id": str(uuid.uuid4())[:8],
-                "title": f"{os.path.splitext(filename)[0]} (IA Polifónica)",
-                "composer": "Poly-Heuristic",
+                "title": f"{os.path.splitext(filename)[0]} (IA Armónica)",
+                "composer": f"{self._midi_to_name(best_key+60)[:-1]} {'Maj' if is_major else 'Min'}",
                 "tempo": 120,
                 "timeSignature": [4, 4],
                 "totalDuration": float(total_dur),
                 "sourceType": "audio",
                 "tracks": [
-                    {"id": "rh", "name": "Derecha", "hand": "right", "color": "#6366f1", "notes": rh_notes},
-                    {"id": "lh", "name": "Izquierda", "hand": "left", "color": "#ec4899", "notes": lh_notes}
+                    {"id": "rh", "name": "Derecha", "hand": "right", "color": "#6366f1", "notes": [n for n in notes if n["hand"] == "right"]},
+                    {"id": "lh", "name": "Izquierda", "hand": "left", "color": "#ec4899", "notes": [n for n in notes if n["hand"] == "left"]}
                 ]
             }
         except Exception as e:
-            print(f"AI ERROR: Polyphonic failed: {str(e)}")
+            print(f"AI ERROR: Scale-aware failed: {str(e)}")
             return self._build_empty_response(filename, str(e))
 
     def _midi_to_song_json(self, midi_data, filename):
@@ -135,11 +157,9 @@ class TranscriptionService:
             pretty_midi = importlib.import_module('pretty_midi')
         except:
             pass
-            
         title = os.path.splitext(filename)[0]
         song_id = str(uuid.uuid4())[:8]
         rh_notes, lh_notes = [], []
-        
         for instrument in midi_data.instruments:
             for note in instrument.notes:
                 p_note = {
