@@ -93,6 +93,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 onChange={(e) => setVisuals({ showNoteNames: e.target.checked })} 
               />
             </div>
+
+            <div className="setting-item checkbox" style={{ border: '1px solid var(--accent-violet)', background: 'rgba(99,102,241,0.05)' }}>
+              <label style={{ color: 'var(--accent-violet-light)', fontWeight: 600 }}>Interactive Wait Mode</label>
+              <input 
+                type="checkbox" 
+                checked={visuals.isWaitMode} 
+                onChange={(e) => setVisuals({ isWaitMode: e.target.checked })} 
+              />
+            </div>
           </section>
         </div>
 

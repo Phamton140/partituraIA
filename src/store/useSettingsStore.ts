@@ -9,6 +9,7 @@ interface VisualSettings {
   showNoteNames: boolean;
   keyboardSize: number; // height in px
   glowIntensity: number; // 0-1
+  isWaitMode: boolean; // Pause song until correct keys are pressed
 }
 
 interface SettingsStore {
@@ -25,6 +26,7 @@ const defaultVisuals: VisualSettings = {
   showNoteNames: true,
   keyboardSize: 130,
   glowIntensity: 0.8,
+  isWaitMode: false,
 };
 
 export const useSettingsStore = create<SettingsStore>()(

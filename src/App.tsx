@@ -5,6 +5,7 @@ import SynthesiaRoll from './components/SynthesiaRoll';
 import TransportBar from './components/TransportBar';
 import ImportPanel from './components/ImportPanel';
 import SongLibrary from './components/SongLibrary';
+import { useSettingsStore } from './store/useSettingsStore';
 import { initAudio, stopAll, isAudioReady, scheduleSong } from './engine/audioEngine';
 import { initMidi } from './engine/midiEngine';
 import SettingsModal from './components/SettingsModal';
@@ -29,6 +30,7 @@ function App() {
     seek
   } = useMusicStore();
 
+  const { visuals } = useSettingsStore();
   const [showSettings, setShowSettings] = React.useState(false);
 
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -57,10 +59,32 @@ function App() {
     if (tickRef.current) clearInterval(tickRef.current);
     
     tickRef.current = setInterval(() => {
-      const elapsed = (performance.now() - startWallRef.current) / 1000;
-      const newTime = startSongRef.current + elapsed * playback.speed;
+      const now = performance.now();
+      const elapsed = (now - startWallRef.current) / 1000;
+      let newTime = startSongRef.current + elapsed * playback.speed;
 
       if (!song) return;
+
+      // --- Wait Mode Logic ---
+      if (visuals.isWaitMode) {
+        // Find notes that should be starting or playing right now
+        // A simple "wait" logic: find any note starting within a small window
+        const windowSize = 0.05; // 50ms
+        const upcomingNotes = song.tracks
+          .filter(t => playback.activeHands.has(t.hand as any))
+          .flatMap(t => t.notes)
+          .filter(n => n.startTime > playback.currentTime - 0.1 && n.startTime <= playback.currentTime + 0.1);
+
+        if (upcomingNotes.length > 0) {
+          const allPressed = upcomingNotes.every(n => playback.userPressedKeys.has(n.midi));
+          if (!allPressed) {
+            // "Freeze" the wall clock so elapsed doesn't increase
+            startWallRef.current = now; 
+            return; 
+          }
+        }
+      }
+      // -----------------------
       
       if (newTime >= song.totalDuration) {
         if (playback.isLooping) {
