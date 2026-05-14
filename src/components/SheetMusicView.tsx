@@ -58,7 +58,7 @@ const SheetMusicView: React.FC<SheetMusicViewProps> = ({ song, playback }) => {
     });
 
     // Create a voice in 4/4 and add notes
-    const voice = new Voice({ num_beats: 4, beat_value: 4 });
+    const voice = new Voice({ numBeats: 4, beatValue: 4 });
     voice.addTickables(notes);
 
     // Format and justify the notes to 700 pixels.
