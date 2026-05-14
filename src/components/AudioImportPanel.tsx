@@ -38,6 +38,10 @@ const AudioImportPanel: React.FC = () => {
       }
 
       const songData = await response.json();
+      if (songData.id === 'error') {
+        throw new Error(songData.title || 'Error desconocido en el motor de IA');
+      }
+
       setResult({ status: 'success', progress: 100, stage: 'Transcripción completada' });
       setSong(songData);
 
@@ -80,6 +84,10 @@ const AudioImportPanel: React.FC = () => {
       }
 
       const songData = await response.json();
+      if (songData.id === 'error') {
+        throw new Error(songData.title || 'Error desconocido en el motor de IA');
+      }
+      
       setResult({ status: 'success', progress: 100, stage: 'Transcripción completada' });
       setSong(songData);
       setYtUrl('');

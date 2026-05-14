@@ -9,14 +9,13 @@ class YouTubeService:
             os.makedirs(self.download_path)
 
     def download_audio(self, url: str):
-        """Downloads audio from a YouTube URL without requiring ffmpeg."""
+        """Downloads audio from a YouTube URL preferring m4a format."""
         file_id = str(uuid.uuid4())[:8]
-        # We don't use postprocessors (no ffmpeg needed)
-        # We just download the best audio available
+        # Prefer m4a which is often more compatible with Windows audio decoders
         out_template = os.path.join(self.download_path, f"{file_id}.%(ext)s")
         
         ydl_opts = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio[ext=m4a]/bestaudio/best', # Prefer m4a
             'outtmpl': out_template,
             'quiet': True,
             'no_warnings': True,
@@ -24,7 +23,6 @@ class YouTubeService:
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            # Find the actual downloaded file (extension might be webm, m4a, etc.)
-            ext = info.get('ext', 'webm')
+            ext = info.get('ext', 'm4a')
             filename = os.path.join(self.download_path, f"{file_id}.{ext}")
             return filename, info.get('title', 'YouTube Song')

@@ -188,9 +188,10 @@ class TranscriptionService:
         }
 
     def _build_empty_response(self, filename, reason):
+        # We put the reason in the title so the user knows what happened
         return {
             "id": "error", 
-            "title": f"Error: {reason}", 
+            "title": f"Fallo: {reason}", 
             "timeSignature": [4, 4], 
             "tempo": 120,
             "totalDuration": 0,
