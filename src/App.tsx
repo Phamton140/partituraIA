@@ -3,7 +3,6 @@ import { useMusicStore } from './store/useMusicStore';
 import PianoKeyboard from './components/PianoKeyboard';
 import SynthesiaRoll from './components/SynthesiaRoll';
 import TransportBar from './components/TransportBar';
-import ImportPanel from './components/ImportPanel';
 import SongLibrary from './components/SongLibrary';
 import { useSettingsStore } from './store/useSettingsStore';
 import { initAudio, stopAll, isAudioReady, scheduleSong } from './engine/audioEngine';
@@ -13,6 +12,7 @@ import SheetMusicView from './components/SheetMusicView';
 import ErrorBoundary from './components/ErrorBoundary';
 import AudioImportPanel from './components/AudioImportPanel';
 import ImageImportPanel from './components/ImageImportPanel';
+import type { Song } from './types/music';
 import { Piano, Sparkles, Menu, X, Settings as SettingsIcon } from 'lucide-react';
 import * as Tone from 'tone';
 
@@ -185,6 +185,13 @@ function App() {
     return () => { stopTick(); stopAll(); };
   }, []);
 
+  const handleSongLoad = useCallback((newSong: any) => {
+    setSong(newSong);
+    setPlayback({ currentTime: 0, isPlaying: false });
+    stopTick();
+    stopAll();
+  }, [setSong, setPlayback]);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -229,7 +236,7 @@ function App() {
 
           <div className="sidebar-section beta">
             <div className="section-title">Lector de Partituras (BETA)</div>
-            <ImageImportPanel />
+            <ImageImportPanel onSongLoaded={handleSongLoad} />
           </div>
 
           <div className="sidebar-divider"></div>

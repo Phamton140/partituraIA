@@ -5,11 +5,11 @@ import type { AnalysisResult } from '../types/music';
 import { parseMidiFile } from '../engine/omrEngine';
 import { analyzeSheetImage } from '../engine/omrEngine';
 
-interface ImportPanelProps {
+interface ImageImportPanelProps {
   onSongLoaded: (song: Song) => void;
 }
 
-const ImportPanel: React.FC<ImportPanelProps> = ({ onSongLoaded }) => {
+const ImageImportPanel: React.FC<ImageImportPanelProps> = ({ onSongLoaded }) => {
   const [dragOver, setDragOver] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult>({
     status: 'idle',
@@ -149,4 +149,4 @@ const ImportPanel: React.FC<ImportPanelProps> = ({ onSongLoaded }) => {
   );
 };
 
-export default ImportPanel;
+export default ImageImportPanel;
