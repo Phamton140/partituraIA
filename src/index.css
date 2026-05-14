@@ -319,6 +319,7 @@ input[type=range] { cursor: pointer; }
 .scrubber {
   flex: 1;
   -webkit-appearance: none;
+  appearance: none;
   height: 4px;
   border-radius: 4px;
   background: var(--bg-elevated);
@@ -326,6 +327,7 @@ input[type=range] { cursor: pointer; }
 }
 .scrubber::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
   width: 14px; height: 14px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent-violet), var(--accent-pink));

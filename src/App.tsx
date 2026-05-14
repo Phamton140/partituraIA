@@ -9,6 +9,7 @@ import { useSettingsStore } from './store/useSettingsStore';
 import { initAudio, stopAll, isAudioReady, scheduleSong } from './engine/audioEngine';
 import { initMidi } from './engine/midiEngine';
 import SettingsModal from './components/SettingsModal';
+import { Song } from './types/music';
 import { Piano, Sparkles, Menu, X, Settings as SettingsIcon } from 'lucide-react';
 import * as Tone from 'tone';
 
@@ -69,7 +70,6 @@ function App() {
       if (visuals.isWaitMode) {
         // Find notes that should be starting or playing right now
         // A simple "wait" logic: find any note starting within a small window
-        const windowSize = 0.05; // 50ms
         const upcomingNotes = song.tracks
           .filter(t => playback.activeHands.has(t.hand as any))
           .flatMap(t => t.notes)
