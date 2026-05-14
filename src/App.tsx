@@ -9,7 +9,7 @@ import { useSettingsStore } from './store/useSettingsStore';
 import { initAudio, stopAll, isAudioReady, scheduleSong } from './engine/audioEngine';
 import { initMidi } from './engine/midiEngine';
 import SettingsModal from './components/SettingsModal';
-import { Song } from './types/music';
+import type { Song } from './types/music';
 import { Piano, Sparkles, Menu, X, Settings as SettingsIcon } from 'lucide-react';
 import * as Tone from 'tone';
 
