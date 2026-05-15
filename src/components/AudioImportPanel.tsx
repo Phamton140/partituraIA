@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Music, CheckCircle, AlertCircle, Loader2, Wand2, Search, Link as LinkIcon, Youtube } from 'lucide-react';
+import { Music, Loader2, Wand2, Search, Link as LinkIcon } from 'lucide-react';
 import { useMusicStore } from '../store/useMusicStore';
 import type { AnalysisResult } from '../types/music';
 
@@ -158,7 +158,7 @@ const AudioImportPanel: React.FC = () => {
       )}
 
       <div className="omr-notice">
-        <Youtube size={12} />
+        <Music size={12} />
         <span>Buscador inteligente de música para piano</span>
       </div>
     </div>
