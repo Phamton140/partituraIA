@@ -25,4 +25,25 @@ class YouTubeService:
             info = ydl.extract_info(url, download=True)
             ext = info.get('ext', 'm4a')
             filename = os.path.join(self.download_path, f"{file_id}.{ext}")
-            return filename, info.get('title', 'YouTube Song')
+    def search_videos(self, query: str, max_results=5):
+        """Searches YouTube for a query and returns a list of results."""
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': True,
+            'force_generic_utils': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Add 'ytsearch:' prefix to force search
+            info = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
+            results = []
+            for entry in info.get('entries', []):
+                results.append({
+                    'id': entry.get('id'),
+                    'title': entry.get('title'),
+                    'url': f"https://www.youtube.com/watch?v={entry.get('id')}",
+                    'thumbnail': entry.get('thumbnails')[0]['url'] if entry.get('thumbnails') else None,
+                    'duration': entry.get('duration'),
+                    'channel': entry.get('uploader')
+                })
+            return results

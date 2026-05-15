@@ -56,6 +56,15 @@ async def transcribe_youtube(url: str = Form(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/youtube/search")
+async def search_youtube(query: str = Form(...)):
+    """Searches YouTube for videos."""
+    try:
+        results = yt_service.search_videos(query)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/status")
 async def get_status():
     return {"status": "AI Engine Online"}
