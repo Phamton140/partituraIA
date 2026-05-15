@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Music, Loader2, Wand2, Search, Link as LinkIcon } from 'lucide-react';
+import { Music, Loader2, Search, Link as LinkIcon } from 'lucide-react';
 import { useMusicStore } from '../store/useMusicStore';
 import type { AnalysisResult } from '../types/music';
 
